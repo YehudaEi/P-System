@@ -9,4 +9,6 @@ session_start();
 include_once(APP_INCLUDE . DS . 'login.php');
 include_once(APP_INCLUDE . DS . 'functions.php');
 include_once(APP_INCLUDE . DS . 'browser.php');
+include_once(APP_INCLUDE . DS . 'request.php');
 
+set_exception_handler('errorHandler');

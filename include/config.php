@@ -7,6 +7,9 @@ define('SERVER_BASE_URL', (HTTPS ? "https" : "http") . "://" . SERVER_BASE_DOMAI
 
 define('FAVICON', "https://yehudae.net/favicon.ico"); # or base64 (data:image/png;base64,)
 
+define('CUSTOM_USER_AGENT', null);
+define('CUSTOM_REFERRER', null);
+
 define('USERS', array(
     'admin' => password_hash('admin@123', PASSWORD_DEFAULT),
     'user' => password_hash('12345', PASSWORD_DEFAULT),
@@ -17,6 +20,8 @@ define('ADMINS' , array(
     'admin' => 1, // admin can view logs
     'user' => 0, // user can't view logs
 ));
+
+define('LOGGING', 1);
 
 define('DEBUG_MODE', 0);
 
@@ -34,7 +39,7 @@ set_time_limit(0);
 define('DS', DIRECTORY_SEPARATOR);
 
 // Credit: https://github.com/NoamDev
-define('URL_REGEX', '/(?:https?:)?(?:\/\/|\\\\\\/\\\\\\/)(?:(?:(?:[a-z0-9]+\.)+[a-z]{2,})|(?:(?:\d{1,3}\.){3}\d{1,3}))(?=["\'\s\/\:])/i');
+define('URL_REGEX', '/(?:https?:)?(?:\/\/|\\\\\\/\\\\\\/)(?:(?:(?:[a-z0-9\-]+\.)+[a-z]{2,})|(?:(?:\d{1,3}\.){3}\d{1,3}))(?=["\'\s\/\:])/i');
 
 define('SESSION_NAME', 'ProxySystem');
 

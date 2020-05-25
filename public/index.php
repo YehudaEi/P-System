@@ -6,7 +6,7 @@ $isLogged = login();
 
 if(!empty($isLogged)){
     if($_SERVER['HTTP_HOST'] != SERVER_BASE_DOMAIN){
-        $proxyUrl = getProxyUrl();
+        $proxyUrl = unProxyUrl();
         $proxy = new browser($proxyUrl);
 
         $page = $proxy->openPage();
@@ -83,8 +83,14 @@ if(!empty($isLogged)){
             elseif(isset($_GET['date'])){
                 $showMain = false;
                 $date = basename($_GET['date']);
-                if(file_exists(APP_TMP . DS . "logs" . DS . $date . ".log")){
-                    echo file_get_contents(APP_TMP . DS . "logs" . DS . $date . ".log");
+                $fileName = APP_TMP . DS . "logs" . DS . $date . ".log";
+                if(file_exists($fileName)){
+                    header('Content-Type: text/plain');
+                    echo file_get_contents($fileName);
+
+                    $line = "[" . date("H:i:s d-m-Y") . "][" . $_SERVER["REMOTE_ADDR"] . "][" . $_SESSION[SESSION_NAME]['user'] . "][" . $date . ".log" . "]" . PHP_EOL;
+                    $logFileName = "View Logs.txt";
+                    logAction($line, $logFileName);
                 }
                 else{
                     $_SESSION[SESSION_NAME]['message'] = "<h2 style='color:red;'>The " . htmlspecialchars($date) . " log was not found 😔</h2>";
@@ -96,7 +102,12 @@ if(!empty($isLogged)){
                 $logName = ucfirst($_GET['special']);
                 $fileName = APP_TMP . DS . "logs" . DS . $logName . " Connections.txt";
                 if(file_exists($fileName)){
+                    header('Content-Type: text/plain');
                     echo file_get_contents($fileName);
+
+                    $line = "[" . date("H:i:s d-m-Y") . "][" . $_SERVER["REMOTE_ADDR"] . "][" . $_SESSION[SESSION_NAME]['user'] . "][" . $logName . " Connections.txt" . "]" . PHP_EOL;
+                    $logFileName = "View Logs.txt";
+                    logAction($line, $logFileName);
                 }
                 else{
                     $_SESSION[SESSION_NAME]['message'] = "<h2 style='color:red;'>The " . htmlspecialchars($logName) . " log was not found 😔</h2>";
