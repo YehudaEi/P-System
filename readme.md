@@ -19,6 +19,6 @@ Feel free to enjoy your web proxy 😁
 
 
 
-### post Scriptum.
+## p.s.
 
 I would be very happy if you could star this project so that more people would enjoy it 👼
