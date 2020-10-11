@@ -10,6 +10,8 @@ define('FAVICON', "https://yehudae.net/favicon.ico"); # or base64 (data:image/pn
 define('CUSTOM_USER_AGENT', null);
 define('CUSTOM_REFERRER', null);
 
+define('EXPIRE_COOKIE_TIME', 60*60*24*2); // 2 days
+
 define('USERS', array(
     'admin' => password_hash('admin@123', PASSWORD_DEFAULT),
     'user' => password_hash('12345', PASSWORD_DEFAULT),
@@ -39,11 +41,13 @@ set_time_limit(0);
 define('DS', DIRECTORY_SEPARATOR);
 
 // Credit: https://github.com/NoamDev
-define('URL_REGEX', '/(?:https?:)?(?:\/\/|\\\\\\/\\\\\\/)(?:(?:(?:[a-z0-9\-]+\.)+[a-z]{2,})|(?:(?:\d{1,3}\.){3}\d{1,3}))(?=["\'\s\/\:])/i');
+define('URL_REGEX', '/(?:https?:)?(?:\/\/|\\\\\\/\\\\\\/)(?:(?:(?:[a-z0-9\-]+\.)+[a-z]{2,})|(?:(?:\d{1,3}\.){3}\d{1,3}))(?=["\'\s\/\:?])/i');
 
 define('SESSION_NAME', 'ProxySystem');
 
 define('APP_ROOT', dirname(dirname(__FILE__)). DS ."public". DS);
 define('APP_TMP', APP_ROOT . ".." . DS . "tmp");
 define('APP_INCLUDE', APP_ROOT . ".." . DS . "include");
+define('APP_YOUTUBE', APP_ROOT . ".." . DS . "YouTube");
+define('APP_LAST_IPS', APP_TMP . DS . "last-ips.json");
 

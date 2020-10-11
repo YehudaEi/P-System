@@ -3,16 +3,20 @@
 class browser {
     private $URL = null;
     private $blacklistedWebsites = array("localhost", "127.0.0.1", SERVER_BASE_URL);
-    private $notAllowedHeaders = array("content-security-policy", "x-frame-options", "access-control-allow-origin", "access-control-allow-methods", "access-control-allow-credentials", "server", "content-length", "expiry", "content-encoding", "transfer-encoding");
+    private $notAllowedHeaders = array("content-security-policy", "x-frame-options", "access-control-allow-origin", "access-control-allow-headers", "access-control-allow-methods", "access-control-allow-credentials", "server", "content-length", "expiry", "content-encoding", "transfer-encoding");
 
     function __construct($URL = "") {
         if (!empty($URL)) {
             $this->URL = modifyURL($URL);
         }
-    }    
+    }
 
     public function openPage() {
         if (!empty($this->URL)) {
+            if(parse_url($this->URL, PHP_URL_HOST) == "youtube.local"){
+                include(APP_YOUTUBE . DS . "index.php");
+                die();
+            }
 
             $request = new request($this->URL);
             $success = $request->exec();
@@ -44,39 +48,34 @@ class browser {
                 }
 
                 $contentType = explode(";", $request->responseHeaders["content-type"])[0];
-                
+
                 foreach($request->responseHeaders as $headerName => $headerValue){
                     if (!empty($headerName) && !in_array(strtolower($headerName), $this->notAllowedHeaders)){
-                        preg_match_all(URL_REGEX, $headerValue, $matchs);
-    
-                        $matchs = array_unique($matchs[0]);
-                        
-                        foreach($matchs as $match){
-                            if($match != "//"){
-                                $proxyMatch = proxyUrl(modifyURL($match));
-                                $headerValue = str_replace($match, $proxyMatch, $headerValue);
-                            }
-                        }
-    
+                        $replaceUrlFunc = function($url){ return proxyUrl(modifyURL($url[0])); };
+                        $headerValue = preg_replace_callback(URL_REGEX, $replaceUrlFunc, $headerValue);
+
                         header($headerName . ": " . $headerValue);
                     }
                 }
-
+                
                 $origin = $_SERVER['HTTP_ORIGIN'] ?? "*";
                 header('Access-Control-Allow-Origin: '.$origin);
-                header('Access-Control-Allow-Credentials: true');                
+                header('Access-Control-Allow-Credentials: true');
                 
+                $AccessAllowedHeaders = "";
+                $tmpHeaders = getallheaders();
+                foreach($tmpHeaders as $headerName => $headerValue){
+                    $AccessAllowedHeaders .= $headerName . ", ";
+                }
+                $AccessAllowedHeaders .= "*";
+                header('Access-Control-Allow-Headers: '.$AccessAllowedHeaders);
 
                 if (strlen($page) > 0) {
                     if(in_array($this->getResponseType($contentType), array("html", "php", "js", "css", "json", "manifest", "plain", "xml"))){
-                        $replaceUrl = function($url){
-                            $proxyUrl = proxyUrl(modifyURL($url[0]));
-                            return $proxyUrl;
-                        };
+                        $page = preg_replace_callback('/integrity\=\"sha\d{3}\-[a-zA-Z0-9\/+=]+\"/i', function($tmp){return "";}, $page); //fix integrity (Because the server is editing it)
 
-                        $page = preg_replace_callback(URL_REGEX, $replaceUrl, $page);
-
-                        $page = str_replace("returnfalse", "return false", $page); //youtube error
+                        $replaceUrlFunc = function($url){/*if($url[0] == "http://www.w3.org") return $url[0];*/ return proxyUrl(modifyURL($url[0])); };
+                        $page = preg_replace_callback(URL_REGEX, $replaceUrlFunc, $page);
                     }
                 }
                 else {

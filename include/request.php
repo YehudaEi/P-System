@@ -9,6 +9,8 @@ class request {
     public $responseHeaders = "";
     public $response = "";
 
+    private $notAllowedHeaders = array("cookie", "host", "referer", "user-agent", "accept-encoding");
+
     function __construct($URL){
         $this->URL = $URL;
         $this->cookieFile = createCookieFile();
@@ -21,10 +23,7 @@ class request {
             curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
             curl_setopt($curl, CURLOPT_FOLLOWLOCATION, true);
             curl_setopt($curl, CURLOPT_ENCODING, $_SERVER['HTTP_ACCEPT_ENCODING']);
-            curl_setopt($curl, CURLOPT_HTTPHEADER, array(
-                "Accept-Language:" . $_SERVER['HTTP_ACCEPT_LANGUAGE'],
-                "Accept:" . $_SERVER['HTTP_ACCEPT'],
-            ));
+            curl_setopt($curl, CURLOPT_CUSTOMREQUEST, $_SERVER['REQUEST_METHOD']);
             curl_setopt($curl, CURLOPT_NOPROGRESS, true);
             curl_setopt_array($curl, array(
                 CURLOPT_TIMEOUT => false, 
@@ -38,7 +37,18 @@ class request {
 
             if(isset($_SERVER['PHP_AUTH_USER']) && isset($_SERVER['PHP_AUTH_PW']))
                 curl_setopt($curl, CURLOPT_USERPWD, $_SERVER['PHP_AUTH_USER'] . ":" . $_SERVER['PHP_AUTH_PW']);
+
+            $sendHeaders = array();
+            $tmpHeaders = getallheaders();
+            foreach($tmpHeaders as $headerName => $headerValue){
+                if(!in_array(strtolower($headerName), $this->notAllowedHeaders)){
+                    $replaceUrlFunc = function($url){ return unProxyUrl(modifyURL($url[0])); };
+                    $headerValue = preg_replace_callback(URL_REGEX, $replaceUrlFunc, $headerValue);
+                    $sendHeaders[] = $headerName . ": " . $headerValue;
+                }
+            }
             
+            curl_setopt($curl, CURLOPT_HTTPHEADER, $sendHeaders);
 
             curl_setopt($curl, CURLOPT_WRITEFUNCTION, (function ($curl, $p) use (&$body, &$headers, &$totalBuffer) {
                 $shouldStream = (preg_match("~(video/|image/)~i", $headers["content-type"][0]) && strpos($headers["content-type"][0], "+") === false);
@@ -94,18 +104,13 @@ class request {
 
             curl_setopt($curl, CURLOPT_COOKIEFILE, $this->cookieFile);
             curl_setopt($curl, CURLOPT_COOKIEJAR, $this->cookieFile);
-
-            foreach ($_FILES as $upload => $files) {
-                for ($i = 0;$i < count($files["name"]);$i++) {
-                    if ($files["error"][$i] == false) {
-                        $name = $upload . (count($files["name"]) > 1 ? "[$i]" : "");
-                    }
-                }
-            }
             
-            if (count($_POST) > 0) {
+            if ($_SERVER['REQUEST_METHOD'] == "POST") {
                 curl_setopt($curl, CURLOPT_POST, true);
-                curl_setopt($curl, CURLOPT_POSTFIELDS, (count($_FILES) > 0 ? $_POST : http_build_query($_POST)));
+                if(count($_POST) > 0)
+                    curl_setopt($curl, CURLOPT_POSTFIELDS, http_build_query($_POST));
+                else
+                    curl_setopt($curl, CURLOPT_POSTFIELDS, file_get_contents('php://input'));
             }
             
             curl_exec($curl);

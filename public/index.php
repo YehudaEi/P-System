@@ -10,6 +10,7 @@ if(!empty($isLogged)){
         $proxy = new browser($proxyUrl);
 
         $page = $proxy->openPage();
+        
         if(empty($page))
             echo "";
         else
@@ -61,11 +62,14 @@ if(!empty($isLogged)){
                                 <tr>';
                             foreach(glob(APP_TMP . DS . "logs" . DS . "*.log") as $num => $filename){
                                 $date = substr(basename($filename), 0, -4);
+				$dateLink = $date;
+                                if($date == date('d-m-Y'))
+                                    $date = "<b>".$date."</b>";
                                 $lastEdit = date("d/m/Y H:i", filemtime($filename));
                                 $num ++;
                                 echo "
                                 <tr>
-                                    <td>{$num}</td><td>{$date}</td><td>{$lastEdit}</td><td><a href=\"/ViewLogs?date={$date}\" target=\"_blank\">Click Here</td>
+                                    <td>{$num}</td><td>{$date}</td><td>{$lastEdit}</td><td><a href=\"/ViewLogs?date={$dateLink}\" target=\"_blank\">Click Here</td>
                                 </tr>";
                             }
                             echo '
@@ -138,10 +142,11 @@ if(!empty($isLogged)){
                     <div align="center">
                         <h1 style="font-size:3vw;">Welcome to the new <span style="color:blue;margin-right:5px;text-shadow:5px 5px 10px #00FF00;">P </span> system :)</h1>
                         ' . $message . '
+                        <h1><a href=\'javascript:document.getElementById("url").value="https://youtube.local";document.getElementById("submit").click();\' style="font-size:3vw;">Youtube Downloader</a></h1>
                         <br>
-                        <form method="POST" target="_blank" style="margin:1px;">
-                            <input dir="ltr" type="text" required style="font-size:1.5vw;width:35%;border-color:limegreen;" name="url" placeholder="URL - (e.g. http://example.com)">
-                            <button style="font-size:1.5vw;" type="submit">Go</button>
+                        <form method="POST" action="/GO" target="_blank" style="margin:1px;">
+                            <input dir="ltr" type="text" required style="font-size:1.5vw;width:35%;border-color:limegreen;" id="url" name="url" placeholder="URL - (e.g. http://example.com)">
+                            <button style="font-size:1.5vw;" type="submit" id="submit">Go</button>
                         </form>
                         <span style="margin:1px;color:gray;font-size:1.4vw;">(opens in a new window)</span>
                     </div>

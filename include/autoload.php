@@ -12,3 +12,5 @@ include_once(APP_INCLUDE . DS . 'browser.php');
 include_once(APP_INCLUDE . DS . 'request.php');
 
 set_exception_handler('errorHandler');
+
+clearCookies();

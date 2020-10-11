@@ -108,12 +108,19 @@ function createCookieFile() {
 }
 
 function modifyURL($URL) {
-    if (!preg_match("~^[a-z]+://~is", $URL = htmlspecialchars_decode(trim($URL)))) {
-        $validDomainName = (preg_match("~^([a-z\d](-*[a-z\d])*)(\.([a-z\d](-*[a-z\d])*))*$~i", $h = parse_url("http://" . $URL, PHP_URL_HOST)) && preg_match("~^.{1,253}$~", $h) && preg_match("~^[^\.]{1,63}(\.[^\.]{1,63})*$~", $h)) && browser::getResponseType(pathinfo($h, PATHINFO_EXTENSION)) == "URL";
+    $URL = htmlspecialchars_decode(trim($URL));
+    if(strpos($URL, "//") === 0)
+        $URL = substr($URL, 2);
+    
+    if (!preg_match("~^[a-z]+://~is", $URL)) {
+        $tmpHost = parse_url("http://" . $URL, PHP_URL_HOST);
+        $validDomainName = (preg_match("~^([a-z\d](-*[a-z\d])*)(\.([a-z\d](-*[a-z\d])*))*$~i", $tmpHost) && preg_match("~^.{1,253}$~", $tmpHost) && preg_match("~^[^\.]{1,63}(\.[^\.]{1,63})*$~", $tmpHost)) && browser::getResponseType(pathinfo($tmpHost, PATHINFO_EXTENSION)) == "URL";;
+        $host = ((isset($validDomainName) && !$validDomainName) || @$URL[0] == "/" ? $tmpHost : "");
 
-        $scheme = (($s = parse_url($URL, PHP_URL_SCHEME)) == "" ? "http" : strtolower($s));
-        $host = ((isset($validDomainName) && !$validDomainName) || @$URL[0] == "/" ? parse_url($URL, PHP_URL_HOST) : "");
-        $URL = ($URL == "#" ? $URL : $scheme . "://" . $host . $URL);
+        $tmpSchema = parse_url("http://" . $URL, PHP_URL_SCHEME);
+        $scheme = ($tmpSchema == "" ? "http" : strtolower($tmpSchema));
+        
+        $URL = $scheme . "://" . $host . $URL;
 
         while (preg_match("~/[A-Za-z0-9_]+/\.\./~", $URL)) {
             $URL = preg_replace("~/[A-Za-z0-9_]+/\.\./~", "/", $URL);
@@ -122,3 +129,29 @@ function modifyURL($URL) {
     return str_replace(array(" ", "\\"), array("+", ""), $URL);
 }
 
+function updateLastIps($remove = false){
+    if(!file_exists(APP_LAST_IPS)) file_put_contents(APP_LAST_IPS, "[]");
+    $data = json_decode(file_get_contents(APP_LAST_IPS), true);
+
+    if(!$remove)
+        $data[$_SERVER['REMOTE_ADDR']] = time();
+    else
+        unset($data[$_SERVER['REMOTE_ADDR']]);
+
+    foreach($data as $ip => $time){
+        if((time() - $time) > 60*5){
+            unset($data[$ip]);
+        }
+    }
+
+    file_put_contents(APP_LAST_IPS, json_encode($data, JSON_PRETTY_PRINT));
+}
+
+function clearCookies(){
+    foreach(glob(APP_TMP . DS . "cookies" . DS . "*.txt") as $fileName){
+        $lastEdit = filemtime($fileName);
+        if(time() - $lastEdit > EXPIRE_COOKIE_TIME){
+            unlink($fileName);
+        }
+    }
+}

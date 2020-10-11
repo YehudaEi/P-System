@@ -1,2 +1,2 @@
-tmp/logs/*
-tmp/cookies/*
+*.log
+*.txt
