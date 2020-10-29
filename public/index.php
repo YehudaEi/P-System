@@ -56,13 +56,22 @@ if(!empty($isLogged)){
                             <h1 style="font-size:3vw;">View <span style="color:blue;margin-right:5px;text-shadow:5px 5px 10px #00FF00;">P </span> system logs</h1>
                             ' . $message . '
                             <br>
+                            <style>td{padding:5px 10px 5px 10px;}</style>
                             <table border="1">
                                 <tr>
                                     <th>Num</th><th>Date</th><th>Last edit</th><th>link</th>
                                 <tr>';
-                            foreach(glob(APP_TMP . DS . "logs" . DS . "*.log") as $num => $filename){
+                            $logFiles = glob(APP_TMP . DS . "logs" . DS . "*.log");
+                            function date_sort($a, $b) {
+                                $a = substr(basename($a), 0, -4);
+                                $b = substr(basename($b), 0, -4);
+
+                                return strtotime($a) - strtotime($b);
+                            }
+                            usort($logFiles, "date_sort");
+                            foreach($logFiles as $num => $filename){
                                 $date = substr(basename($filename), 0, -4);
-				$dateLink = $date;
+                                $dateLink = $date;
                                 if($date == date('d-m-Y'))
                                     $date = "<b>".$date."</b>";
                                 $lastEdit = date("d/m/Y H:i", filemtime($filename));
